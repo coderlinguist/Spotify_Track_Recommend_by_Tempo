@@ -1,0 +1,66 @@
+
+from dotenv import load_dotenv
+import os
+import json
+import base64  # encoding module
+from requests import post  # post to an api
+from requests import get
+
+load_dotenv()
+
+client_ID = os.getenv("Client_ID")
+client_secret = os.getenv("Client_secret")
+
+
+def get_token():
+    auth_string = client_ID + ":" + client_secret
+    auth_bytes = auth_string.encode("utf-8")
+    auth_base64 = str(base64.b64encode(auth_bytes), "utf-8")
+
+    url = "https://accounts.spotify.com/api/token"
+    headers = {
+        "Authorization": "Basic " + auth_base64,
+        "Content-type": "application/x-www-form-urlencoded"
+    }
+    data = {"grant_type": "client_credentials"}
+    result = post(url, headers=headers, data=data)  # body of the request
+    # want to convert the json data in the response to a python dictionary so we can access the information
+    json_result = json.loads(result.content)
+    token = json_result["access_token"]
+    return token
+
+def get_auth_header(token):
+    return {"Authorization": "Bearer " + token}
+
+def search_for_recommendations_by_tempo (token,target_tempo):
+    url = "https://api.spotify.com/v1/recommendations"
+    headers = get_auth_header(token)
+    query = f"?q={target_tempo}&type=target_tempo&limit=1&market=GB&seed_genres=disco%2Cfunk%2Cafrobeat&max_duration_ms=210000"
+
+    query_url = url + query
+    result = get(query_url, headers=headers)
+    json_result = json.loads(result.content)["tracks"]
+    if len(json_result) == 0:
+        print("No tracks with this tempo available, sorry :( ")
+        return none
+    return json_result[0]
+
+
+token = get_token()
+print("Access token: " + token)
+
+target_tempo = input("\nLet's find the perfect workout tracks for you. Ready? \n\nResearch shows that matching your playlist to your ideal workout tempo optimises performance. Pretty cool right?\n\nPick a tempo that best matches your exercise: \n\nStretching — 70–79 bpm \nWarm up/down — 80–99 bpm \nEntering the burn zone!: 100–120 bpm \nHigh intensity: 121+ bpm \n\nWhich tempo do you need? (70–150): ")
+
+result = search_for_recommendations_by_tempo(token, target_tempo)
+
+# Track details
+track_id = result["id"]
+track_duration_ms = result["duration_ms"]
+track_duration_min = track_duration_ms / 60000
+track_duration_min_rounded = round(track_duration_min, 2)
+track_name = result["name"]
+
+# Print track details
+print("\nTrack: " + track_name)
+print("\nTrack ID: " + track_id)
+print("Track length: " + str(track_duration_min_rounded) + " min\n")
