@@ -24,7 +24,7 @@ def get_token():
     }
     data = {"grant_type": "client_credentials"}
     result = post(url, headers=headers, data=data)  # body of the request
-    # want to convert the json data in the response to a python dictionary so we can access the information
+    # convert the json data in the response to a python dictionary so we can access the information
     json_result = json.loads(result.content)
     token = json_result["access_token"]
     return token
